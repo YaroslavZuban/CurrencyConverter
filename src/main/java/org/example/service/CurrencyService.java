@@ -1,9 +1,14 @@
 package org.example.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.model.Currency;
+import org.example.reader.CurrencyRate;
 import org.example.repository.CurrencyDatabase;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +58,8 @@ public class CurrencyService {
                 continue;
             }
 
+            insertCurrency();
+
             System.out.println("Translation result: " + convertToRubles());
         }
     }
@@ -66,6 +73,19 @@ public class CurrencyService {
         double result = Double.parseDouble(amount) / rateCurrencyCode;
 
         return result + " рублей";
+    }
+
+    public void insertCurrency() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String response = CurrencyRate.getCurrencyReader();
+            Currency currency = objectMapper.readValue(response, Currency.class);
+
+            CurrencyDatabase.insertCurrency(currency);
+        } catch (IOException | SQLException e) {
+            throw new RuntimeException("Invalid currency.");
+        }
     }
 
     public boolean checkCurrency() throws SQLException {
